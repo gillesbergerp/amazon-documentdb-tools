@@ -114,7 +114,7 @@ def write_difference_to_file(output_file, content):
         file.write(str(content) + '\n')
 
 
-def compare_collections(srcCollection, tgtCollection, batch_size, output_file, check_target, sample_size_percent, sampling_timeout_ms):
+def compare_collections(srcCollection, tgtCollection, batch_size, output_file, check_target, sample_size_percent, sampling_timeout_ms, check_indexes):
     src_count = srcCollection.count_documents({})
     trg_count = tgtCollection.count_documents({})
 
@@ -132,7 +132,9 @@ def compare_collections(srcCollection, tgtCollection, batch_size, output_file, c
 
     print(f"Starting data differ at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} , output is saved to {output_file}")
     compare_document_data(srcCollection, tgtCollection, batch_size, output_file, src_count, sample_size_percent, sampling_timeout_ms)
-    compare_indexes(srcCollection, tgtCollection, output_file)
+
+    if check_indexes:
+        compare_indexes(srcCollection, tgtCollection, output_file)
     if check_target:
         check_target_for_extra_documents(srcCollection, tgtCollection, output_file)
 
@@ -150,6 +152,7 @@ def main():
     parser.add_argument('--target-coll', type=str, required=True, help='Target collection name (required)')
     parser.add_argument('--sample-size-percent', type=int, required=False, help='optional, if set only samples a percentage of the documents')
     parser.add_argument('--sampling-timeout-ms', type=int, default=500, required=False, help='optional, override the timeout for returning a sample of documents when using the --sample-size-percent argument')
+    parser.add_argument('--check-indexes', action='store_true', default=False, required=False, help='optional, Check if indexes match between source and target')
     args = parser.parse_args()
 
     # Connect to the source database cluster
@@ -163,7 +166,7 @@ def main():
     tgtCollection = tgtdb[args.target_coll]
 
     # Compare collections and report differences
-    compare_collections(srcCollection, tgtCollection, args.batch_size, args.output_file, args.check_target, args.sample_size_percent, args.sampling_timeout_ms)
+    compare_collections(srcCollection, tgtCollection, args.batch_size, args.output_file, args.check_target, args.sample_size_percent, args.sampling_timeout_ms, args.check_indexes)
 
 if __name__ == '__main__':
     main()
